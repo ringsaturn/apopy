@@ -81,11 +81,11 @@ class Client(object):
     ):
         root_key = f"{namespace}.{namespace_type.value}"
         if call_cache_api:
-            self.cache[root_key] = self.read_configs_with_cache(
+            self.cache[root_key] = self.read_namespace_with_cache(
                 namespace, namespace_type
             )
         else:
-            self.cache[root_key] = self.read_configs_without_cache(
+            self.cache[root_key] = self.read_namespace_without_cache(
                 namespace, namespace_type
             ).configurations
 
@@ -109,7 +109,7 @@ class Client(object):
             raise Exception(f"failed: status_code={r.status_code}, text={r.text}")
         return r.json()
 
-    def read_configs_with_cache(
+    def read_namespace_with_cache(
         self,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
@@ -121,7 +121,7 @@ class Client(object):
         """
         return self._read("configfiles", namespace, namespace_type)
 
-    def read_configs_without_cache(
+    def read_namespace_without_cache(
         self,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
@@ -159,5 +159,5 @@ if __name__ == "__main__":
         secret="5fdc723621054e0f945cb441561687eb",
         ip="192.168.1.4",
     )
-    print(client.read_configs_without_cache())
+    print(client.read_namespace_without_cache())
     print(client.get("test", call_cache_api=False))
