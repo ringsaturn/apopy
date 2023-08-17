@@ -2,7 +2,6 @@ import base64
 import hashlib
 import hmac
 import time
-from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional, Tuple
 
@@ -19,15 +18,6 @@ def signature(timestamp, uri, secret):
 
 
 Configurations = Dict[str, str]
-
-
-@dataclass
-class ReadConfigWithoutCache:
-    appId: str
-    cluster: str
-    namespaceName: str
-    configurations: Configurations
-    releaseKey: str
 
 
 class NamespaceType(Enum):
@@ -77,21 +67,13 @@ class Client(object):
         self,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
-        call_cache_api: bool = True,
     ):
         root_key = f"{namespace}.{namespace_type.value}"
-        if call_cache_api:
-            self.cache[root_key] = self.read_namespace_with_cache(
-                namespace, namespace_type
-            )
-        else:
-            self.cache[root_key] = self.read_namespace_without_cache(
-                namespace, namespace_type
-            ).configurations
+        self.cache[root_key] = self.read_namespace_with_cache(namespace, namespace_type)
 
     def _read(
         self, api_path: str, namespace: str, namespace_type: NamespaceType
-    ) -> Dict:
+    ) -> dict:
         _namespace = namespace
         if namespace_type != NamespaceType.PROPERTIES:
             _namespace = f"{_namespace}.{namespace_type.value}"
@@ -119,19 +101,22 @@ class Client(object):
 
         由于缓存最多会有一秒的延时，所以如果需要配合配置推送通知实现实时更新配置的话，请参考「通过不带缓存的Http接口从Apollo读取配置」。
         """
-        return self._read("configfiles", namespace, namespace_type)
+        return self._read("configfiles/json", namespace, namespace_type)
 
     def read_namespace_without_cache(
         self,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
-    ) -> ReadConfigWithoutCache:
+    ) -> Dict[str, str]:
         """
         该接口会直接从数据库中获取配置，可以配合配置推送通知实现实时更新配置。
         """
-        return ReadConfigWithoutCache(
-            **self._read("configs", namespace, namespace_type)
-        )
+        # appId: str
+        # cluster: str
+        # namespaceName: str
+        # configurations: Configurations
+        # releaseKey: str
+        return self._read("configs", namespace, namespace_type)
 
     def get(
         self,
@@ -141,6 +126,10 @@ class Client(object):
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
         call_cache_api: bool = False,
     ):
+        if not call_cache_api:
+            return self.read_namespace_without_cache(
+                namespace=namespace, namespace_type=namespace_type
+            )["configurations"].get(key, default)
         root_key = f"{namespace}.{namespace_type.value}"
         if root_key not in self.cache:
             self.update(
@@ -159,5 +148,6 @@ if __name__ == "__main__":
         secret="5fdc723621054e0f945cb441561687eb",
         ip="192.168.1.4",
     )
+    print(client.read_namespace_with_cache(namespace="application"))
     print(client.read_namespace_without_cache())
-    print(client.get("test", call_cache_api=False))
+    # print(client.get("test", call_cache_api=False))
