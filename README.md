@@ -1,4 +1,8 @@
-# apopy: Simple Apollo Config Client for Python.
+# apopy: Simple Apollo Config Client for Python. [![PyPI](https://img.shields.io/pypi/v/apopy)](https://pypi.org/project/apopy/)
+
+```bash
+pip install apopy
+```
 
 ```python
 from apopy import Client, NamespaceType
