@@ -1,4 +1,4 @@
-# apopy: Simple Apollo Config Client for Python. [![PyPI](https://img.shields.io/pypi/v/apopy)](https://pypi.org/project/apopy/)
+# apopy: Simple Apollo Config Client for Python. [![PyPI](https://img.shields.io/pypi/v/apopy)](https://pypi.org/project/apopy/) [![CI](https://github.com/ringsaturn/apopy/actions/workflows/ci.yaml/badge.svg)](https://github.com/ringsaturn/apopy/actions/workflows/ci.yaml) [![publish](https://github.com/ringsaturn/apopy/actions/workflows/deploy.yaml/badge.svg)](https://github.com/ringsaturn/apopy/actions/workflows/deploy.yaml)
 
 ```bash
 pip install apopy
