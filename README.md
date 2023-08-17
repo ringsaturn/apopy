@@ -1,7 +1,7 @@
-# OAPY: Simple Apollo Config Client for Python.
+# apopy: Simple Apollo Config Client for Python.
 
 ```python
-from oapy import Client
+from apopy import Client
 
 client = Client(
     config_server_url="http://81.68.181.139:8080",  # http://81.68.181.139/system_info.html
