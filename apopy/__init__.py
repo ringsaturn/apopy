@@ -2,11 +2,11 @@ import base64
 import hashlib
 import hmac
 import time
-from typing import Optional, Tuple, Dict
+from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, Optional, Tuple
 
 import httpx
-from pydantic import BaseModel
 
 
 def signature(timestamp, uri, secret):
@@ -21,7 +21,8 @@ def signature(timestamp, uri, secret):
 Configurations = Dict[str, str]
 
 
-class ReadConfigWithoutCache(BaseModel):
+@dataclass
+class ReadConfigWithoutCache:
     appId: str
     cluster: str
     namespaceName: str
@@ -158,4 +159,5 @@ if __name__ == "__main__":
         secret="5fdc723621054e0f945cb441561687eb",
         ip="192.168.1.4",
     )
+    print(client.read_configs_without_cache())
     print(client.get("test", call_cache_api=False))
