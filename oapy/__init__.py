@@ -31,7 +31,9 @@ class ReadConfigWithoutCache(BaseModel):
 
 class NamespaceType(Enum):
     PROPERTIES: str = "properties"
+    XML: str = "xml"
     JSON: str = "json"
+    YML: str = "yml"
     YAML: str = "yaml"
     TXT: str = "txt"
 
