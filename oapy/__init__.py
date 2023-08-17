@@ -92,7 +92,7 @@ class Client(object):
         _namespace = namespace
         if namespace_type != NamespaceType.PROPERTIES:
             _namespace = f"{_namespace}.{namespace_type.value}"
-        url = f"{self.config_server_url}/{api_path}/json/{self.app_id}/{self.cluster_name}/{_namespace}?ip={self.ip}"
+        url = f"{self.config_server_url}/{api_path}/{self.app_id}/{self.cluster_name}/{_namespace}?ip={self.ip}"
         query = {}
         if self.ip:
             query["ip"] = self.ip
@@ -156,4 +156,4 @@ if __name__ == "__main__":
         secret="5fdc723621054e0f945cb441561687eb",
         ip="192.168.1.4",
     )
-    print(client.get("test"))
+    print(client.get("test", call_cache_api=False))

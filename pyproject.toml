@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "oapy"
+version = "0.1.0"
+description = "Simple Apollo Config Client for Python."
+authors = ["ringsaturn <ringsaturn.me@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pydantic = "^2.2.0"
+httpx = {extras = ["socks"], version = "^0.24.1"}
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.284"
+black = "^23.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
