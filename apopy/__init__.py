@@ -110,12 +110,8 @@ class Client(object):
             namespace=_namespace,
             ip=self.ip,
         )
-        query = {}
-        if self.ip:
-            query["ip"] = self.ip
         r = httpx.get(
             url,
-            params=query,
             headers=self._prepare_header(url),
             timeout=self.timeout,
         )
