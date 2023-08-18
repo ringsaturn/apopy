@@ -4,6 +4,8 @@
 pip install apopy
 ```
 
+## Quick Start
+
 ```python
 from apopy import Client, NamespaceType
 
@@ -27,4 +29,29 @@ print(
 
 # 读取配置
 print(client.get("test"))
+```
+
+### 配置轮训更新
+
+Apopy 没有提供内置的配置轮训更新功能，但是可以通过以下方式实现：
+
+
+```python
+def start_background_update(client: Client):
+    import threading
+
+    def _update():
+        while True:
+            try:
+                client.update()
+            except Exception:
+                pass
+            finally:
+                time.sleep(3)
+
+    t = threading.Thread(target=_update)
+    t.start()
+
+
+start_background_update(client)
 ```

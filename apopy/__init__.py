@@ -38,7 +38,19 @@ class Client(object):
         ip: Optional[str] = None,
         secret: Optional[str] = None,
         timeout: int = 60,
-    ):
+    ) -> "Client":
+        """Apollo Client.
+
+        Args:
+            config_server_url (str): config server url
+            app_id (str): app id
+            cluster_name (str, optional): cluster name. Defaults to "default".
+            ip (Optional[str], optional): ip. Defaults to None.
+            secret (Optional[str], optional): secret. Defaults to None.
+            timeout (int, optional): timeout. Defaults to 60.
+        Returns:
+            Client: apollo client
+        """
         self.config_server_url = config_server_url
         self.app_id = app_id
         self.cluster_name = cluster_name
@@ -67,9 +79,22 @@ class Client(object):
         self,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
+        call_cache_api: bool = True,
     ):
+        """Update cache.
+
+        Args:
+            namespace (str, optional): namespace. Defaults to "application".
+            namespace_type (NamespaceType, optional): namespace type. Defaults to NamespaceType.PROPERTIES.
+            call_cache_api (bool, optional): call cache api. Defaults to True.
+        """
         root_key = f"{namespace}.{namespace_type.value}"
-        self.cache[root_key] = self.read_namespace_with_cache(namespace, namespace_type)
+        if not call_cache_api:
+            self.cache[root_key] = self.read_namespace_with_cache(namespace, namespace_type)
+        self.cache[root_key] = self.read_namespace_without_cache(
+            namespace, namespace_type
+        )["configurations"]
+            
 
     def _read(
         self, api_path: str, namespace: str, namespace_type: NamespaceType
@@ -108,6 +133,12 @@ class Client(object):
 
         由于缓存最多会有一秒的延时，所以如果需要配合配置推送通知实现实时更新配置的话，
         请参考 `read_namespace_without_cache` 。
+
+        Args:
+            namespace (str, optional): namespace. Defaults to "application".
+            namespace_type (NamespaceType, optional): namespace type. Defaults to NamespaceType.PROPERTIES.
+        Returns:
+            Configurations: configurations
         """
         return self._read("configfiles/json", namespace, namespace_type)
 
@@ -118,6 +149,11 @@ class Client(object):
     ) -> Configurations:
         """
         该接口会直接从数据库中获取配置，可以配合配置推送通知实现实时更新配置。
+        Args:
+            namespace (str, optional): namespace. Defaults to "application".
+            namespace_type (NamespaceType, optional): namespace type. Defaults to NamespaceType.PROPERTIES.
+        Returns:
+            Configurations: configurations
         """
         # appId: str
         # cluster: str
@@ -133,7 +169,20 @@ class Client(object):
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
         call_cache_api: bool = True,
-    ):
+    ) -> Optional[str]:
+        """Get key from config.
+
+        Args:
+
+            key (str): key
+            default (Any, optional): default value. Defaults to None.
+            namespace (str, optional): namespace. Defaults to "application".
+            namespace_type (NamespaceType, optional): namespace type. Defaults to NamespaceType.PROPERTIES.
+            call_cache_api (bool, optional): call cache api. Defaults to True.
+
+        Returns:
+            Optional[str]: value
+        """
         if not call_cache_api:
             return self.read_namespace_without_cache(
                 namespace=namespace, namespace_type=namespace_type
@@ -143,6 +192,7 @@ class Client(object):
             self.update(
                 namespace=namespace,
                 namespace_type=namespace_type,
+                call_cache_api=call_cache_api,
             )
         return self.cache[root_key].get(key, default)
 
@@ -157,4 +207,4 @@ if __name__ == "__main__":
     )
     print(client.read_namespace_with_cache(namespace="application"))
     print(client.read_namespace_without_cache())
-    # print(client.get("test", call_cache_api=False))
+    print(client.get("test", call_cache_api=False))
