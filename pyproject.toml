@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "apopy"
-version = "0.1.3"
+version = "0.1.4"
 description = "Simple Apollo Config Client for Python."
 authors = ["ringsaturn <ringsaturn.me@gmail.com>"]
 license = "MIT"
