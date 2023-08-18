@@ -8,7 +8,7 @@ from typing import Dict, Optional, Tuple
 import httpx
 
 
-def signature(timestamp, uri, secret):
+def _signature(timestamp: str, uri: str, secret: str):
     # Refer: https://github.com/xhrg-product/apollo-client-python/blob/1.0.1/apollo/util.py#L25-L31
     string_to_sign = "" + timestamp + "\n" + uri
     hmac_code = hmac.new(
@@ -51,7 +51,7 @@ class Client(object):
         # Refer: https://github.com/xhrg-product/apollo-client-python/blob/1.0.1/apollo/util.py#L25-L31
         ms = str(int(time.time() * 1000))
         uri = url[len(self.config_server_url) : len(url)]
-        sign = signature(ms, uri, self.secret)
+        sign = _signature(ms, uri, self.secret)
         return ms, sign
 
     def _prepare_header(self, url: str) -> dict:
@@ -77,7 +77,14 @@ class Client(object):
         _namespace = namespace
         if namespace_type != NamespaceType.PROPERTIES:
             _namespace = f"{_namespace}.{namespace_type.value}"
-        url = f"{self.config_server_url}/{api_path}/{self.app_id}/{self.cluster_name}/{_namespace}?ip={self.ip}"
+        url = "{config_server_url}/{api_path}/{app_id}/{cluster_name}/{namespace}?ip={ip}".format(
+            config_server_url=self.config_server_url,
+            api_path=api_path,
+            app_id=self.app_id,
+            cluster_name=self.cluster_name,
+            namespace=_namespace,
+            ip=self.ip,
+        )
         query = {}
         if self.ip:
             query["ip"] = self.ip
@@ -99,7 +106,8 @@ class Client(object):
         """
         该接口会从缓存中获取配置，适合频率较高的配置拉取请求，如简单的每30秒轮询一次配置。
 
-        由于缓存最多会有一秒的延时，所以如果需要配合配置推送通知实现实时更新配置的话，请参考「通过不带缓存的Http接口从Apollo读取配置」。
+        由于缓存最多会有一秒的延时，所以如果需要配合配置推送通知实现实时更新配置的话，
+        请参考 `read_namespace_without_cache` 。
         """
         return self._read("configfiles/json", namespace, namespace_type)
 
@@ -107,7 +115,7 @@ class Client(object):
         self,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
-    ) -> Dict[str, str]:
+    ) -> Configurations:
         """
         该接口会直接从数据库中获取配置，可以配合配置推送通知实现实时更新配置。
         """
@@ -124,7 +132,7 @@ class Client(object):
         default=None,
         namespace: str = "application",
         namespace_type: NamespaceType = NamespaceType.PROPERTIES,
-        call_cache_api: bool = False,
+        call_cache_api: bool = True,
     ):
         if not call_cache_api:
             return self.read_namespace_without_cache(
@@ -135,7 +143,6 @@ class Client(object):
             self.update(
                 namespace=namespace,
                 namespace_type=namespace_type,
-                call_cache_api=call_cache_api,
             )
         return self.cache[root_key].get(key, default)
 
