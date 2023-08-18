@@ -37,21 +37,32 @@ Apopy 没有提供内置的配置轮训更新功能，但是可以通过以下�
 
 
 ```python
+import time
+import threading
+
+
 def start_background_update(client: Client):
-    import threading
 
     def _update():
         while True:
             try:
-                client.update()
+                client.update(
+                    namespace="application",
+                    namespace_type=NamespaceType.PROPERTIES,
+                    call_cache_api=False,
+                )
             except Exception:
                 pass
             finally:
-                time.sleep(3)
+                time.sleep(10)
 
     t = threading.Thread(target=_update)
     t.start()
 
 
 start_background_update(client)
+
+while True:
+    print(client.read_namespace_with_cache(namespace="application"))
+    time.sleep(5)
 ```
