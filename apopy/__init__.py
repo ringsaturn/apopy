@@ -34,7 +34,7 @@ class Client(object):
         self,
         config_server_url: str,
         app_id: str,
-        cluster_name: str,
+        cluster_name: str = "default",
         ip: Optional[str] = None,
         secret: Optional[str] = None,
         timeout: int = 60,
