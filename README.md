@@ -1,10 +1,16 @@
-# apopy: Simple Apollo Config Client for Python. [![PyPI](https://img.shields.io/pypi/v/apopy)](https://pypi.org/project/apopy/) [![CI](https://github.com/ringsaturn/apopy/actions/workflows/ci.yaml/badge.svg)](https://github.com/ringsaturn/apopy/actions/workflows/ci.yaml) [![publish](https://github.com/ringsaturn/apopy/actions/workflows/deploy.yaml/badge.svg)](https://github.com/ringsaturn/apopy/actions/workflows/deploy.yaml)
+# apopy: Simple Apollo Config Client for Python. [![PyPI](https://img.shields.io/pypi/v/apopy)](https://pypi.org/project/apopy/)
 
 ```bash
 pip install apopy
 ```
 
 ## Quick Start
+
+> **NOTE**
+>
+> - 示例里的配置信息仅供测试使用，请勿用于生产环境。
+> - 具体的配置可能会变动，仅用于说明使用方法，具体的访问方式见
+  > <https://www.apolloconfig.com/#/zh/README>
 
 ```python
 from apopy import Client, NamespaceType
@@ -33,8 +39,12 @@ print(client.get("test"))
 
 ### 配置轮训更新
 
-Apopy 没有提供内置的配置轮训更新功能，但是可以通过以下方式实现：
+Apopy 提供了内置的针对单独 namespace 配置轮训更新功能，可以通过以下方式实现：
 
+> **WARNING**
+>
+> Apopy 本身并没有配置单独的线程锁/进程锁，如果真的需要异步订阅更新，
+> 请根据自己的需求在外层加上锁保护。
 
 ```python
 import time
@@ -46,22 +56,19 @@ def start_background_update(client: Client):
     def _update():
         while True:
             try:
-                client.update(
-                    namespace="application",
-                    namespace_type=NamespaceType.PROPERTIES,
-                    call_cache_api=False,
+                client.read_notification_and_update(
+                    namespace="application", namespace_type=NamespaceType.PROPERTIES
                 )
             except Exception:
                 pass
             finally:
-                time.sleep(10)
+                time.sleep(3)
 
     t = threading.Thread(target=_update)
     t.start()
 
 
 start_background_update(client)
-
 while True:
     print(client.read_namespace_with_cache(namespace="application"))
     time.sleep(5)

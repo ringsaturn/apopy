@@ -1,9 +1,11 @@
 import base64
 import hashlib
 import hmac
+import json
 import time
 from enum import Enum
 from typing import Dict, Optional, Tuple
+from urllib.parse import urlencode
 
 import httpx
 
@@ -37,7 +39,7 @@ class Client(object):
         cluster_name: str = "default",
         ip: Optional[str] = None,
         secret: Optional[str] = None,
-        timeout: int = 60,
+        timeout: int = 90,
     ) -> "Client":
         """Apollo Client.
 
@@ -47,7 +49,7 @@ class Client(object):
             cluster_name (str, optional): cluster name. Defaults to "default".
             ip (Optional[str], optional): ip. Defaults to None.
             secret (Optional[str], optional): secret. Defaults to None.
-            timeout (int, optional): timeout. Defaults to 60.
+            timeout (int, optional): timeout. Defaults to 90.
         Returns:
             Client: apollo client
         """
@@ -58,6 +60,10 @@ class Client(object):
         self.ip = ip
         self.secret = secret
         self.cache: Dict[str, Configurations] = {}
+
+        # Key: namespaceName
+        # Value: notificationId
+        self.read_notification_cache: Dict[str, str] = {}
 
     def _get_auth(self, url: str) -> Tuple[int, str]:
         # Refer: https://github.com/xhrg-product/apollo-client-python/blob/1.0.1/apollo/util.py#L25-L31
@@ -89,12 +95,13 @@ class Client(object):
             call_cache_api (bool, optional): call cache api. Defaults to True.
         """
         root_key = f"{namespace}.{namespace_type.value}"
-        if not call_cache_api:
-            self.cache[root_key] = self.read_namespace_with_cache(namespace, namespace_type)
+        if call_cache_api:
+            self.cache[root_key] = self.read_namespace_with_cache(
+                namespace, namespace_type
+            )
         self.cache[root_key] = self.read_namespace_without_cache(
             namespace, namespace_type
         )["configurations"]
-            
 
     def _read(
         self, api_path: str, namespace: str, namespace_type: NamespaceType
@@ -192,15 +199,67 @@ class Client(object):
             )
         return self.cache[root_key].get(key, default)
 
+    def _read_notification(self, namespace: str = "application"):
+        """Read notification.
 
-if __name__ == "__main__":
-    client = Client(
-        config_server_url="http://81.68.181.139:8080",
-        app_id="apollo-common",
-        cluster_name="default",
-        secret="5fdc723621054e0f945cb441561687eb",
-        ip="192.168.1.4",
-    )
-    print(client.read_namespace_with_cache(namespace="application"))
-    print(client.read_namespace_without_cache())
-    print(client.get("test", call_cache_api=False))
+        Returns:
+            Notification: notification
+        """
+        url = "{config_server_url}/notifications/v2".format(
+            config_server_url=self.config_server_url
+        )
+        notifications = []
+        if namespace in self.read_notification_cache:
+            notifications.append(
+                {
+                    "namespaceName": namespace,
+                    "notificationId": self.read_notification_cache[namespace],
+                }
+            )
+        else:
+            notifications.append(
+                {
+                    "namespaceName": namespace,
+                    "notificationId": -1,
+                }
+            )
+        query_string = urlencode(
+            {
+                "appId": self.app_id,
+                "cluster": self.cluster_name,
+                "notifications": json.dumps(notifications),
+            }
+        )
+        full_url = url + "?" + query_string
+        r = httpx.get(
+            full_url,
+            headers=self._prepare_header(full_url),
+            timeout=self.timeout,
+        )
+        if r.status_code == 304:
+            # Nothing changed
+            return []
+        if r.status_code != 200:
+            raise Exception(f"failed: status_code={r.status_code}, text={r.text}")
+        # [
+        #     {
+        #         "namespaceName": "application",
+        #         "notificationId": 17135,
+        #         "messages": {"details": {"apollo-common+default+application": 17135}},
+        #     }
+        # ]
+        return r.json()
+
+    def read_notification_and_update(
+        self,
+        namespace: str = "application",
+        namespace_type: NamespaceType = NamespaceType.PROPERTIES,
+    ):
+        notification_msgs = self._read_notification(namespace)
+        if len(notification_msgs) == 0:
+            return
+        for msg in notification_msgs:
+            self.update(
+                namespace=namespace, namespace_type=namespace_type, call_cache_api=True
+            )
+            self.read_notification_cache[namespace] = msg["notificationId"]
