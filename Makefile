@@ -11,7 +11,7 @@ help:
 	@echo "  all      - Run lock, sync, fmt, lint, and test"
 
 build:
-	uv build
+	uv build --no-sources
 
 fmt:
 	uv run ruff check --select I --fix .
