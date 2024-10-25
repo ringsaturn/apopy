@@ -1,19 +1,16 @@
-[tool.poetry]
+[project]
 name = "apopy"
-version = "0.1.5"
+version = "0.1.6"
 description = "Simple Apollo Config Client for Python."
-authors = ["ringsaturn <ringsaturn.me@gmail.com>"]
+maintainers = [{ name = "ringsaturn", email = "ringsaturn.me@gmail.com" }]
 license = "MIT"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.8"
-httpx = {extras = ["socks"], version = "^0.27.0"}
-
-[tool.poetry.group.dev.dependencies]
-ruff = ">=0.5.0,<0.7.0"
-pytest = "^8.1.1"
+requires-python = ">=3.9"
+dependencies = ["httpx[socks]>=0.27.2"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = ["pytest>=8.3.3", "ruff>=0.7.1"]

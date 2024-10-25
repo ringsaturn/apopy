@@ -9,26 +9,23 @@ jobs:
   pypi-publish:
     name: upload release to PyPI
     runs-on: ubuntu-latest
-    environment: release
+    environment:
+      name: PyPI
+      url: https://pypi.org/p/apopy
     permissions:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install Python
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
+          python-version-file: "pyproject.toml"
 
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v3
-
-      - name: Setup a local virtual environment (if no poetry.toml file)
-        run: |
-          poetry config virtualenvs.create true --local
-          poetry config virtualenvs.in-project true --local
-
-      - name: Build
-        run: poetry build
+      - run: make build
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
